@@ -35,36 +35,24 @@ let teclas = {
 const esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 if (esMovil) {
-  let zonaTactil = {
-    izquierda: window.innerWidth * 0.4,
-    derecha: window.innerWidth * 0.6
-  };
+  canvas.addEventListener('touchstart', (e) => {
+    const toque = e.touches[0];
+    const xToque = toque.clientX - canvas.getBoundingClientRect().left;
 
-  window.addEventListener('touchstart', (e) => {
-    const touch = e.touches[0];
-
-    if (!juegoActivo && !gameOver) {
-      juegoActivo = true;
-      document.getElementById("menu")?.style?.display = "none";
-      canvas.style.display = "block";
-    } else if (!gameOver) {
-      balas.push({ x: jugador.x + jugador.width / 2 - 5, y: jugador.y });
-
-      if (touch.clientX < zonaTactil.izquierda) {
-        teclas.izquierda = true;
-      } else if (touch.clientX > zonaTactil.derecha) {
-        teclas.derecha = true;
-      }
+    if (xToque < canvas.width / 2) {
+      teclas.izquierda = true;
+    } else {
+      teclas.derecha = true;
     }
   });
 
-  window.addEventListener('touchend', () => {
+  canvas.addEventListener('touchend', () => {
     teclas.izquierda = false;
     teclas.derecha = false;
   });
 }
 
-// ==== EVENTOS DE TECLADO (PC) ====
+// ==== EVENTOS DE TECLADO ====
 document.addEventListener("keydown", (e) => {
   if (e.code === "ArrowLeft") teclas.izquierda = true;
   if (e.code === "ArrowRight") teclas.derecha = true;
@@ -72,7 +60,7 @@ document.addEventListener("keydown", (e) => {
   if (e.code === "Space") {
     if (!juegoActivo && !gameOver) {
       juegoActivo = true;
-      document.getElementById("menu")?.style?.display = "none";
+      document.getElementById("menu").style.display = "none";
       canvas.style.display = "block";
     } else if (!gameOver) {
       balas.push({ x: jugador.x + jugador.width / 2 - 5, y: jugador.y });
@@ -88,7 +76,7 @@ document.addEventListener("keyup", (e) => {
   if (e.code === "ArrowRight") teclas.derecha = false;
 });
 
-// ==== FUNCIONES DEL JUEGO ====
+// ==== FUNCIONES ====
 function crearEnemigo() {
   enemigos.push({
     x: Math.random() * (canvas.width - 60),
@@ -101,9 +89,9 @@ function crearEnemigo() {
 
 function detectarColision(a, b) {
   return a.x < b.x + b.width &&
-         a.x + a.width > b.x &&
-         a.y < b.y + b.height &&
-         a.y + a.height > b.y;
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y;
 }
 
 function actualizar() {
@@ -112,12 +100,14 @@ function actualizar() {
   if (teclas.izquierda) jugador.x -= jugador.velocidad;
   if (teclas.derecha) jugador.x += jugador.velocidad;
 
+  // Limitar movimiento del jugador
   if (jugador.x < 0) jugador.x = 0;
   if (jugador.x + jugador.width > canvas.width) jugador.x = canvas.width - jugador.width;
 
   balas.forEach(b => b.y -= 10);
   enemigos.forEach(e => e.y += e.velocidad);
 
+  // Colisiones
   enemigos.forEach((enemigo, i) => {
     balas.forEach((bala, j) => {
       if (detectarColision(enemigo, { ...bala, width: 50, height: 50 })) {
@@ -144,7 +134,6 @@ function dibujar() {
   ctx.drawImage(jugadorImg, jugador.x, jugador.y, jugador.width, jugador.height);
   balas.forEach(b => ctx.drawImage(balaImg, b.x, b.y, 50, 50));
   enemigos.forEach(e => ctx.drawImage(enemigoImg, e.x, e.y, e.width, e.height));
-
   ctx.fillStyle = 'black';
   ctx.font = '24px Arial';
   ctx.fillText('Puntos: ' + puntuacion, 10, 30);
@@ -164,12 +153,13 @@ function dibujar() {
   }
 
   if (gameOver) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#e91e63';
     ctx.font = 'bold 50px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('¡Perdiste!', canvas.width / 2, 250);
+
     ctx.font = '24px Arial';
     ctx.fillStyle = 'black';
     ctx.fillText('Enemigos eliminados: ' + puntuacion, canvas.width / 2, 320);
